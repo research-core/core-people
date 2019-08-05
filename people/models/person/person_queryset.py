@@ -4,6 +4,8 @@ from django.db.models import Q
 
 from django.contrib.contenttypes.models import ContentType
 
+from permissions.models import Permission
+
 class PersonQuerySet(models.QuerySet):
 
     def filter_by_groups(self, groups):
@@ -61,7 +63,7 @@ class PersonQuerySet(models.QuerySet):
         contenttype = ContentType.objects.get_for_model(self.model)
         authgroups  = user.groups.filter(permissions__content_type=contenttype)
         authgroups  = authgroups.filter(permissions_filter).distinct()
-        return Permissions.objects.filter(djangogroup__in=authgroups)
+        return Permission.objects.filter(djangogroup__in=authgroups)
 
     def __filter_by_permissions(self, user, perms):
         if user.is_superuser: return self
@@ -80,7 +82,7 @@ class PersonQuerySet(models.QuerySet):
                     rankfilters = Q()
                     for researchgroup, ranking in rankings:
                         rankfilters.add(Q(researchgroup=researchgroup, ranking__gte=ranking), Q.OR)
-                    rankperms = Permissions.objects.filter(rankfilters)
+                    rankperms = Permission.objects.filter(rankfilters)
 
                     qs = self.exclude(
                         ~Q(djangouser=user) &

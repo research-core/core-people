@@ -6,7 +6,6 @@ class Position(models.Model):
     Represents the position a person has in the institute
     Example: Principal Invertigator, Research Technician, PhD Student
     """
-
     name = models.CharField(max_length=200)
 
     @staticmethod

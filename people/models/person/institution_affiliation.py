@@ -4,7 +4,6 @@ class InstitutionAffiliation(models.Model):
     """
     Represents a Person wich is a Member of that Group
     """
-
     person = models.ForeignKey(
         to='Person',
         related_name='membership',

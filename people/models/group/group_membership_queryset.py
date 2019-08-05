@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.db.models import Q
 
-class GroupMemberQuerySet(models.QuerySet):
+class GroupMembershipQuerySet(models.QuerySet):
 
     def active(self):
         """

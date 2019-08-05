@@ -10,8 +10,6 @@ from django.utils.text import slugify
 from sorl.thumbnail import get_thumbnail
 from django.utils    import timezone
 
-
-
 from .person_queryset import PersonQuerySet
 
 
@@ -24,46 +22,45 @@ class Person(models.Model):
 
     DEFAULT_PICTURE_URL = '/static/square-image.png'
 
-    person_id       = models.AutoField(primary_key=True)  #: ID
-    person_first    = models.CharField('First name', max_length=40, help_text='This field will appear in the website.')                            #: First Name
-    person_last     = models.CharField('Last name', max_length=40, help_text='This field will appear in the website.')                              #: Last Name
-    person_email    = models.EmailField('Research email', help_text='This field will appear in the website.')                  #: Institution Email
-    person_personalemail = models.EmailField('Personal email', blank=True, null=True)       #: Personal Email
-    person_phoneext = models.IntegerField('Phone extension', blank=True, null=True)         #: Phone Etension
-    person_mobile   = models.CharField('Mobile',max_length=20, blank=True, null=True)         #: Mobile Phone Number
-    person_bio      = models.TextField('Biography', blank=True, null=True, default='', help_text='This field will appear in the website.')           #: Biography text
-    person_birthday = models.DateField('Birthday', blank=True, null=True,)                  #: Birthday Date
-    person_img      = models.ImageField(upload_to="uploads/person/person_img", max_length=150, blank=True, verbose_name='Picture', help_text='This field will appear in the website.')  #: Picture link
-    person_cv       = models.FileField('Short Vitae', upload_to="uploads/person/person_cv", blank=True, null=True, help_text='This field will appear in the website.')                   #: CV link
-    person_room     = models.CharField('Room',max_length=10, blank=True, null=True)     #: Room Number
-    person_emergencycontact = models.TextField('Emergency contacts',max_length=100, blank=True, null=True, default='')
-    person_gender   = models.CharField('Gender', max_length=1, choices=( ('F','Female'),('M','Male') ) )
-    person_active   = models.BooleanField('Active', default=True)
-    person_cardnum  = models.IntegerField('Card number', blank=True, null=True)
+    active = models.BooleanField('Active', default=True)
+
+    birthday    = models.DateField('Birthday', blank=True, null=True, )  #: Birthday Date
+    gender      = models.CharField('Gender', max_length=1, choices=(('F', 'Female'), ('M', 'Male')))
+    first_name  = models.CharField('First name', max_length=40, help_text='This field will appear in the website.')                            #: First Name
+    middle_name = models.CharField('Middle name', max_length=100, blank=True)
+    last_name   = models.CharField('Last name', max_length=40, help_text='This field will appear in the website.')                              #: Last Name
+    full_name   = models.CharField('Name', max_length=150)
+
+    email = models.EmailField('Research email', help_text='This field will appear in the website.')                  #: Institution Email
+    web   = models.URLField('Website', blank=True, null=True,
+                          help_text='This field will appear in the website.')  #: URL to the person's website
+    personal_email  = models.EmailField('Personal email', blank=True, null=True)       #: Personal Email
+    phone_extension = models.IntegerField('Phone extension', blank=True, null=True)         #: Phone Etension
+    phone_number    = models.CharField('Contact', max_length=20, blank=True, null=True,
+                                    help_text='This field will appear in the website if the next field is checked.')
+    emergency_contact = models.TextField('Emergency contacts', max_length=100, blank=True, null=True, default='')
+
+    biography = models.TextField('Biography', blank=True, null=True, default='', help_text='This field will appear in the website.')           #: Biography text
+    curriculum_vitae = models.FileField('Short Vitae', upload_to="uploads/person/person_cv", blank=True, null=True,
+                                        help_text='This field will appear in the website.')  #: CV link
 
     position = models.ForeignKey('Position', blank=True, null=True, on_delete=models.CASCADE)
+    img      = models.ImageField(upload_to="uploads/person/person_img", max_length=150, blank=True, verbose_name='Picture', help_text='This field will appear in the website.')  #: Picture link
+    room     = models.CharField('Room', max_length=10, blank=True, null=True)     #: Room Number
+    card_number = models.IntegerField('Card number', blank=True, null=True)
+    date_joined = models.DateField('Joined date', blank=True, null=True, )
+    date_left  = models.DateField('Leave date', blank=True, null=True, )
 
-    full_name = models.CharField('Name', max_length=150)
-
-    # Deprecated fields: not used in any frontend
-    # Verify no issues arise with cnp-core-sync before removing these
-    person_middle   =   models.CharField('Middle name', max_length=100, blank=True)
-    person_phone    = models.CharField('Contact',max_length=20, blank=True, null=True, help_text='This field will appear in the website if the next field is checked.')         #: Contact Number
-    person_phoneshow = models.BooleanField('Show this contact in the website', default=False)                   #: Check box Show contact in the website
-    person_web      = models.URLField('Website', blank=True, null=True, help_text='This field will appear in the website.')     #: URL to the person's website
-    person_datejoined = models.DateField('Joined date', blank=True, null=True,)
-    person_end      = models.DateField('End date', blank=True, null=True,)
-
-    djangouser = models.ForeignKey(
+    auth_user = models.ForeignKey(
         'auth.User',
-        blank=True, null=True, verbose_name='User', related_name='person_user',
+        blank=True, null=True, verbose_name='User', related_name='person',
         on_delete=models.CASCADE
     )
 
     objects = PersonQuerySet.as_manager()
 
     class Meta:
-        ordering = ['person_first','person_last' ]
+        ordering = ['first_name','last_name' ]
         verbose_name = "Person"
         verbose_name_plural = "People"
 
@@ -89,64 +86,64 @@ class Person(models.Model):
         the administrator will have to provide a password, permmissions
         and related group in order to give acssess to this user
         """
-        if self.djangouser is None:
-            if User.objects.filter(email=self.person_email).exists():
+        if self.auth_user is None:
+            if User.objects.filter(email=self.email).exists():
                 #if there is a user in django with this email
-                self.djangouser = User.objects.get(email=self.person_email)
-                self.djangouser.is_active=True
-                self.djangouser.is_staff=True
-                self.djangouser.save()
+                self.auth_user = User.objects.get(email=self.email)
+                self.auth_user.is_active=True
+                self.auth_user.is_staff=True
+                self.auth_user.save()
             else:
-                self.djangouser = User.objects.create_user(
-                    ".".join(list(map(slugify, [self.person_first, self.person_last]))),
-                    self.person_email,
+                self.auth_user = User.objects.create_user(
+                    ".".join(list(map(slugify, [self.first_name, self.last_name]))),
+                    self.email,
                     last_login=timezone.now()
                 )
-                self.djangouser.is_active=True
-                self.djangouser.is_staff=True
-                self.djangouser.first_name  = self.person_first
-                self.djangouser.last_name   = self.person_last
-                self.djangouser.save()
+                self.auth_user.is_active=True
+                self.auth_user.is_staff=True
+                self.auth_user.first_name  = self.first_name
+                self.auth_user.last_name   = self.last_name
+                self.auth_user.save()
 
-            from people.models import GroupMember
-            memberships = GroupMember.objects.filter(person=self)
+            from people.models import GroupMembership
+            memberships = GroupMembership.objects.filter(person=self)
             group = Group.objects.get(name=settings.PROFILE_GUEST)
-            self.djangouser.groups.add(group)
+            self.auth_user.groups.add(group)
             for member in memberships:
                 if member.group.groupdjango!=None:
-                    self.djangouser.groups.add(member.group.groupdjango)
-            self.djangouser.save()
+                    self.auth_user.groups.add(member.group.groupdjango)
+            self.auth_user.save()
 
-            if  self.djangouser.email.endswith('.fchampalimaud.org') and \
-                not EmailAddress.objects.filter(email=self.djangouser.email, user=self.djangouser).exists():
-                e = EmailAddress(user=self.djangouser, email=self.djangouser.email, verified=True, primary=True)
+            if  self.auth_user.email.endswith('.fchampalimaud.org') and \
+                not EmailAddress.objects.filter(email=self.auth_user.email, user=self.auth_user).exists():
+                e = EmailAddress(user=self.auth_user, email=self.auth_user.email, verified=True, primary=True)
                 e.save()
 
         # TODO the above code block needs testing and updating
         # TODO create method .join_guest_group() to reuse
 
-        if self.person_active:
-            self.djangouser.is_active = True
+        if self.active:
+            self.auth_user.is_active = True
             # self.djangouser.is_staff = False  # not needed in CORE v2
             # FIXME this needs to be dealt in another way, let everyone be Staff for now
             # TODO join Guest auth group
         else:
             # If Person is set as inactive, revoke all access permissions
-            self.djangouser.is_active = False
-            self.djangouser.is_staff = False
-            self.djangouser.is_superuser = False
-            self.djangouser.user_permissions.clear()
-            self.djangouser.groups.clear()
+            self.auth_user.is_active = False
+            self.auth_user.is_staff = False
+            self.auth_user.is_superuser = False
+            self.auth_user.user_permissions.clear()
+            self.auth_user.groups.clear()
         # The active status can be reverted but permissions will require
         # manual assignment
-        self.djangouser.save()
+        self.auth_user.save()
 
         super(Person, self).save(*args, **kw)
 
 
     @staticmethod
     def autocomplete_search_fields():
-        return ("person_first__icontains", "person_middle__icontains", 'person_last__icontains')
+        return ("first_name__icontains", "middle_name__icontains", 'last_name__icontains')
 
     def fullname(self):
         """To be deprecated in favour of `full_name` field."""
@@ -158,11 +155,11 @@ class Person(models.Model):
 
     @property
     def name(self):
-        return " ".join(filter(None, (self.person_first, self.person_last)))
+        return " ".join(filter(None, (self.first_name, self.last_name)))
 
     def get_privateinfo(self):
-
         from humanresources.models import PrivateInfo
+
         try:
             pinfo = self.privateinfo
         except PrivateInfo.DoesNotExist:
@@ -226,9 +223,9 @@ class Person(models.Model):
         ])
 
     def thumbnail_url(self, geometry_string):
-        if self.person_img:
+        if self.img:
             url = get_thumbnail(
-                self.person_img,
+                self.img,
                 geometry_string,
                 crop='center',
                 format='PNG',
@@ -243,29 +240,19 @@ class Person(models.Model):
     thumbnail_80x80.short_description = ' '
 
     def photo(self):
-        if self.person_img:
-            return format_html("""<a class='imageLink' target='_blank'href='%s'><img src='%s' width='50px' height='50px'  ></a>""" % (self.person_img.url,self.person_img.url))
+        if self.img:
+            return format_html("""<a class='imageLink' target='_blank'href='%s'><img src='%s' width='50px' height='50px'  ></a>""" % (self.img.url, self.img.url))
         else:
             return ''
     photo.short_description = 'Picture'
     photo.allow_tags = True
-
-
-
-
-
-    def personuser(self):
-
-        if self.username:
-            return django.contrib.auth.models.User.objects.get(username = self.person_username, is_staff=True, is_active=True,)
-
 
     # Object Permissions
 
     def has_view_permission(self, user):
         if any((
             user.is_superuser,
-            user == self.djangouser,
+            user == self.auth_user,
             user.groups.filter(name=settings.PROFILE_HUMAN_RESOURCES).exists(),
         )):
             return True
@@ -275,7 +262,7 @@ class Person(models.Model):
     def has_change_permission(self, user):
         if any((
             user.is_superuser,
-            user == self.djangouser,
+            user == self.auth_user,
             user.groups.filter(name=settings.PROFILE_HUMAN_RESOURCES).exists(),
         )):
             return True

@@ -15,7 +15,7 @@ class GroupQuerySet(models.QuerySet):
         This is by default what everyone sees if they have no permissions.
         """
         return self.filter(
-            Q(person__djangouser=user)
+            Q(person__auth_user=user)
         ).distinct()
 
     def managed_by(self, user, default=None):
@@ -51,7 +51,7 @@ class GroupQuerySet(models.QuerySet):
             ):
                 research_groups.append(parts[2])
 
-        qs = self.filter(group_name__in=research_groups) or default.distinct()
+        qs = self.filter(name__in=research_groups) or default.distinct()
 
         return qs
 
