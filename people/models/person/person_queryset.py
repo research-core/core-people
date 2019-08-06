@@ -15,7 +15,7 @@ class PersonQuerySet(models.QuerySet):
         """
         Filter only active people
         """
-        return self.filter(person_active=True)
+        return self.filter(active=True)
 
     def noactivecontract(self):
         """
@@ -85,13 +85,13 @@ class PersonQuerySet(models.QuerySet):
                     rankperms = Permission.objects.filter(rankfilters)
 
                     qs = self.exclude(
-                        ~Q(djangouser=user) &
-                        Q(djangouser__groups__rankedpermissions__in=rankperms)
+                        ~Q(auth_user=user) &
+                        Q(auth_user__groups__rankedpermissions__in=rankperms)
                     )
 
                     now = timezone.now()
                     qs = qs.filter(
-                        Q(djangouser=user) |
+                        Q(auth_user=user) |
                         Q(
                             groupmember__date_joined__lte=now,
                             groupmember__date_left__gte=now,
@@ -111,7 +111,7 @@ class PersonQuerySet(models.QuerySet):
                     return qs.distinct()
 
         # By default returns only the Person associated to the user
-        return self.filter(djangouser=user).distinct()
+        return self.filter(auth_user=user).distinct()
 
     def list_permissions(self, user):
         # If super user then return all the People
@@ -123,6 +123,7 @@ class PersonQuerySet(models.QuerySet):
 
 
     def has_add_permissions(self, user):
+        return True
         return self.__query_permissions(
             user,
             Q(permissions__codename='add_person')
@@ -138,4 +139,4 @@ class PersonQuerySet(models.QuerySet):
 
     def has_remove_permissions(self, user):
         perms = self.__query_permissions( user, Q(permissions__codename='delete_person') )
-        return self.__filter_by_permissions(user, perms).exclude(djangouser=user).exists()
+        return self.__filter_by_permissions(user, perms).exclude(auth_user=user).exists()

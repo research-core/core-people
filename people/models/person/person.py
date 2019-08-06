@@ -1,4 +1,4 @@
-import warnings
+import warnings, os
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth.models import Group, User
@@ -12,49 +12,53 @@ from django.utils    import timezone
 
 from .person_queryset import PersonQuerySet
 
+def get_image_upload_path(instance, filename):
+    return os.path.join('uploads', 'person', 'img', str(instance.pk), filename)
 
+def get_cv_upload_path(instance, filename):
+    return os.path.join('uploads', 'person', 'cv', str(instance.pk), filename)
 
 class Person(models.Model):
     """
     Represents a Person in the system
     Example: Adam Kampff, Ana Elias
     """
-
     DEFAULT_PICTURE_URL = '/static/square-image.png'
 
     active = models.BooleanField('Active', default=True)
 
-    birthday    = models.DateField('Birthday', blank=True, null=True, )  #: Birthday Date
+    birthday    = models.DateField('Birthday', blank=True, null=True, )
     gender      = models.CharField('Gender', max_length=1, choices=(('F', 'Female'), ('M', 'Male')))
-    first_name  = models.CharField('First name', max_length=40, help_text='This field will appear in the website.')                            #: First Name
+    first_name  = models.CharField('First name', max_length=40, help_text='This field will appear in the website.')
     middle_name = models.CharField('Middle name', max_length=100, blank=True)
-    last_name   = models.CharField('Last name', max_length=40, help_text='This field will appear in the website.')                              #: Last Name
+    last_name   = models.CharField('Last name', max_length=40, help_text='This field will appear in the website.')
     full_name   = models.CharField('Name', max_length=150)
 
-    email = models.EmailField('Research email', help_text='This field will appear in the website.')                  #: Institution Email
+    email = models.EmailField('Research email', help_text='This field will appear in the website.')
     web   = models.URLField('Website', blank=True, null=True,
-                          help_text='This field will appear in the website.')  #: URL to the person's website
-    personal_email  = models.EmailField('Personal email', blank=True, null=True)       #: Personal Email
-    phone_extension = models.IntegerField('Phone extension', blank=True, null=True)         #: Phone Etension
+                          help_text='This field will appear in the website.')
+    personal_email  = models.EmailField('Personal email', blank=True, null=True)
+    phone_extension = models.IntegerField('Phone extension', blank=True, null=True)
     phone_number    = models.CharField('Contact', max_length=20, blank=True, null=True,
                                     help_text='This field will appear in the website if the next field is checked.')
     emergency_contact = models.TextField('Emergency contacts', max_length=100, blank=True, null=True, default='')
 
-    biography = models.TextField('Biography', blank=True, null=True, default='', help_text='This field will appear in the website.')           #: Biography text
-    curriculum_vitae = models.FileField('Short Vitae', upload_to="uploads/person/person_cv", blank=True, null=True,
-                                        help_text='This field will appear in the website.')  #: CV link
+    biography        = models.TextField('Biography', blank=True, null=True, default='',
+                                        help_text='This field will appear in the website.')
+    curriculum_vitae = models.FileField('Short Vitae', upload_to=get_cv_upload_path, blank=True, null=True,
+                                        help_text='This field will appear in the website.')
 
-    position = models.ForeignKey('Position', blank=True, null=True, on_delete=models.CASCADE)
-    img      = models.ImageField(upload_to="uploads/person/person_img", max_length=150, blank=True, verbose_name='Picture', help_text='This field will appear in the website.')  #: Picture link
-    room     = models.CharField('Room', max_length=10, blank=True, null=True)     #: Room Number
+    position    = models.ForeignKey('Position', blank=True, null=True, on_delete=models.CASCADE)
+    img         = models.ImageField(upload_to=get_image_upload_path, max_length=150, blank=True, verbose_name='Picture', help_text='This field will appear in the website.')  #: Picture link
+    room        = models.CharField('Room', max_length=10, blank=True, null=True)     #: Room Number
     card_number = models.IntegerField('Card number', blank=True, null=True)
     date_joined = models.DateField('Joined date', blank=True, null=True, )
-    date_left  = models.DateField('Leave date', blank=True, null=True, )
+    date_left   = models.DateField('Leave date', blank=True, null=True, )
 
-    auth_user = models.ForeignKey(
+    auth_user   = models.ForeignKey(
         'auth.User',
         blank=True, null=True, verbose_name='User', related_name='person',
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL
     )
 
     objects = PersonQuerySet.as_manager()
@@ -90,32 +94,20 @@ class Person(models.Model):
             if User.objects.filter(email=self.email).exists():
                 #if there is a user in django with this email
                 self.auth_user = User.objects.get(email=self.email)
-                self.auth_user.is_active=True
-                self.auth_user.is_staff=True
-                self.auth_user.save()
             else:
                 self.auth_user = User.objects.create_user(
                     ".".join(list(map(slugify, [self.first_name, self.last_name]))),
                     self.email,
                     last_login=timezone.now()
                 )
-                self.auth_user.is_active=True
-                self.auth_user.is_staff=True
-                self.auth_user.first_name  = self.first_name
-                self.auth_user.last_name   = self.last_name
-                self.auth_user.save()
-
-            from people.models import GroupMembership
-            memberships = GroupMembership.objects.filter(person=self)
-            group = Group.objects.get(name=settings.PROFILE_GUEST)
-            self.auth_user.groups.add(group)
-            for member in memberships:
-                if member.group.groupdjango!=None:
-                    self.auth_user.groups.add(member.group.groupdjango)
+            self.auth_user.is_active = True
+            self.auth_user.is_staff  = True
+            self.auth_user.first_name = self.first_name
+            self.auth_user.last_name  = self.last_name
             self.auth_user.save()
 
-            if  self.auth_user.email.endswith('.fchampalimaud.org') and \
-                not EmailAddress.objects.filter(email=self.auth_user.email, user=self.auth_user).exists():
+            # Set the email as verified automatically
+            if EmailAddress.objects.filter(email=self.auth_user.email, user=self.auth_user).exists():
                 e = EmailAddress(user=self.auth_user, email=self.auth_user.email, verified=True, primary=True)
                 e.save()
 
@@ -124,13 +116,10 @@ class Person(models.Model):
 
         if self.active:
             self.auth_user.is_active = True
-            # self.djangouser.is_staff = False  # not needed in CORE v2
-            # FIXME this needs to be dealt in another way, let everyone be Staff for now
-            # TODO join Guest auth group
         else:
             # If Person is set as inactive, revoke all access permissions
             self.auth_user.is_active = False
-            self.auth_user.is_staff = False
+            self.auth_user.is_staff  = False
             self.auth_user.is_superuser = False
             self.auth_user.user_permissions.clear()
             self.auth_user.groups.clear()
@@ -138,7 +127,7 @@ class Person(models.Model):
         # manual assignment
         self.auth_user.save()
 
-        super(Person, self).save(*args, **kw)
+        super().save(*args, **kw)
 
 
     @staticmethod
@@ -218,8 +207,8 @@ class Person(models.Model):
         Person is a member of.
         """
         return '; '.join([
-            membership.group.group_name
-            for membership in self.groupmember_set.all()
+            membership.group.name
+            for membership in self.groupmembership_set.active().all()
         ])
 
     def thumbnail_url(self, geometry_string):

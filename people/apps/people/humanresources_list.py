@@ -1,29 +1,28 @@
 from confapp import conf
-from permissions.models import Permission
 from people.models import Person
-from django.contrib.contenttypes.models import ContentType
-from pyforms_web.widgets.django import ModelAdminWidget
-from django.conf import settings
+from permissions.models import Permission
 from pyforms.controls import ControlCheckBox
+from .humanresourses_form import HumanResourcesForm
+from pyforms_web.widgets.django import ModelAdminWidget
+from django.contrib.contenttypes.models import ContentType
 
-from .people_form import PeopleFormWidget
-
-from django.db.models import Q
-
-class PeopleListWidget(ModelAdminWidget):
+class HumanResourcesList(ModelAdminWidget):
     """
     """
-    UID   = 'people'
-    TITLE = 'People'
+    UID   = 'hr-people'
+    TITLE = 'Human resources'
+
     MODEL = Person
 
     LIST_ROWS_PER_PAGE = 40
 
+    LIST_HEADERS = ['Photo', 'Name', 'Email', 'Active']
+    LIST_COLS_ALIGN = ['center', 'left', 'left', 'center']
     LIST_DISPLAY = (
         'thumbnail_80x80',
         'full_name',
         'email',
-        'position',
+        'active',
     )
 
     SEARCH_FIELDS = (
@@ -32,7 +31,7 @@ class PeopleListWidget(ModelAdminWidget):
         'personal_email__icontains'
     )
 
-    EDITFORM_CLASS = PeopleFormWidget
+    EDITFORM_CLASS = HumanResourcesForm
 
     EXPORT_CSV = True
     EXPORT_CSV_COLUMNS = [
@@ -46,13 +45,14 @@ class PeopleListWidget(ModelAdminWidget):
     # Orquestra Configuration
     # =========================================================================
 
-    LAYOUT_POSITION = conf.ORQUESTRA_HOME_FULL
+    LAYOUT_POSITION = conf.ORQUESTRA_HOME
 
     USE_DETAILS_TO_EDIT = False
 
-    ORQUESTRA_MENU = 'left'
+    ORQUESTRA_MENU = 'middle-left'
     ORQUESTRA_MENU_ICON = 'users'
     ORQUESTRA_MENU_ORDER = 1
+
 
     @classmethod
     def has_permissions(cls, user):
@@ -60,11 +60,10 @@ class PeopleListWidget(ModelAdminWidget):
 
         # Search for the user groups with certain permissions
         contenttype = ContentType.objects.get_for_model(cls.MODEL)
-        authgroups = user.groups.filter(permissions__content_type=contenttype)
-        authgroups = authgroups.filter(permissions__codename='app_access_people')
-        return Permission.objects.filter(auth_group__in=authgroups).exists()
-
-
+        authgroups  = user.groups.filter(permissions__content_type=contenttype)
+        authgroups  = authgroups.filter(permissions__codename='app_access_hr')
+        perms = Permission.objects.filter(djangogroup__in=authgroups)
+        return perms.exists()
 
     def __init__(self, *args, **kwargs):
 
@@ -96,8 +95,11 @@ class PeopleListWidget(ModelAdminWidget):
 
         self.__check_data_integraty()
 
+
     def get_queryset(self, request, qs):
-        qs = qs.active()
+
+        if self._active_filter.value:
+            qs = qs.active()
 
         if self._nocontract_filter.value:
             qs = qs.noactivecontract()
@@ -110,6 +112,7 @@ class PeopleListWidget(ModelAdminWidget):
     def get_toolbar_buttons(self, has_add_permission=False):
         return (
             '_add_btn' if has_add_permission else None,
+            '_active_filter',
             '_nocontract_filter',
             '_noproposal_filter',
         )
