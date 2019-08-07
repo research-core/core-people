@@ -10,7 +10,7 @@ class HumanResourcesList(ModelAdminWidget):
     """
     """
     UID   = 'hr-people'
-    TITLE = 'Human resources'
+    TITLE = 'People'
 
     MODEL = Person
 
@@ -49,7 +49,7 @@ class HumanResourcesList(ModelAdminWidget):
 
     USE_DETAILS_TO_EDIT = False
 
-    ORQUESTRA_MENU = 'middle-left'
+    ORQUESTRA_MENU = 'middle-left>HRDashboard'
     ORQUESTRA_MENU_ICON = 'users'
     ORQUESTRA_MENU_ORDER = 1
 

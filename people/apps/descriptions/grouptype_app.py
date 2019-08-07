@@ -21,6 +21,7 @@ class GroupTypesAdminApp(ModelAdminWidget):
     ORQUESTRA_MENU_ORDER = 0
     ORQUESTRA_MENU_ICON  = 'tags'
     ########################################################
-    
+
+    AUTHORIZED_GROUPS = ['superuser']
     
     

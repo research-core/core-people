@@ -55,7 +55,7 @@ class Person(models.Model):
     date_joined = models.DateField('Joined date', blank=True, null=True, )
     date_left   = models.DateField('Leave date', blank=True, null=True, )
 
-    auth_user   = models.ForeignKey(
+    auth_user   = models.OneToOneField(
         'auth.User',
         blank=True, null=True, verbose_name='User', related_name='person',
         on_delete=models.SET_NULL

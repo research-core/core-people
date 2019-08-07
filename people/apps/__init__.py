@@ -15,3 +15,5 @@ try:
     from .profile import UserProfileFormWidget
 except:
     pass
+
+from .dashboard import HRDashboard

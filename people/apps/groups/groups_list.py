@@ -14,7 +14,7 @@ class GroupsListApp(ModelAdminWidget):
 
     MODEL = ResearchGroup
 
-    ORQUESTRA_MENU = 'middle-left>HumanResourcesList'
+    ORQUESTRA_MENU = 'middle-left>HRDashboard'
     ORQUESTRA_MENU_ICON = 'rocket'
     ORQUESTRA_MENU_ORDER = 10
 

@@ -23,4 +23,4 @@ class ScientificAreasAdminApp(ModelAdminWidget):
     ORQUESTRA_MENU_ICON = 'lightbulb outline'
     ########################################################
 
-
+    AUTHORIZED_GROUPS = ['superuser']

@@ -23,4 +23,5 @@ class PositionsAdminApp(ModelAdminWidget):
     ORQUESTRA_MENU_ICON = 'address card'
     ########################################################
 
+    AUTHORIZED_GROUPS = ['superuser']
 

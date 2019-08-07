@@ -21,6 +21,7 @@ class DegreesAdminApp(ModelAdminWidget):
     ORQUESTRA_MENU_ORDER = 0
     ORQUESTRA_MENU_ICON  = 'certificate'
     ########################################################
-    
+
+    AUTHORIZED_GROUPS = ['superuser']
     
     
