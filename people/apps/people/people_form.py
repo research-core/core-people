@@ -59,6 +59,9 @@ class PeopleFormWidget(HumanResourcesForm):
         from .people_list import PeopleListWidget
         return PeopleListWidget.has_permissions(user)
 
+    def has_remove_permissions(self):
+        return False
+
     @property
     def title(self):
         obj = self.model_object

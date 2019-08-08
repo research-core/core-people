@@ -31,6 +31,12 @@ class PeopleListWidget(HumanResourcesList):
         authgroups  = authgroups.filter(permissions__codename='app_access_people')
         return Permission.objects.filter(auth_group__in=authgroups).exists()
 
+    def has_add_permissions(self):
+        return False
+
+    def has_remove_permissions(self, obj):
+        return False
+
     def get_queryset(self, request, qs):
         qs = qs.active()
 

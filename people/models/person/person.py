@@ -191,7 +191,7 @@ class Person(models.Model):
         @return:        link to the "contracts" page of that person
         """
         try:
-            return format_html("""<a class="btn btn-warning" href='/humanresources/contract/?person_id=%s' ><i class="icon-folder-close icon-black"></i> Show contracts</a>""" % (self.person_id))
+            return format_html("""<a class="btn btn-warning" href='/humanresources/contract/?person_id=%s' ><i class="icon-folder-close icon-black"></i> Show contracts</a>""" % (self.pk))
         except ObjectDoesNotExist:
             return "Not created yet"
     person_contracts.short_description = 'Contracts'
