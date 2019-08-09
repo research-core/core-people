@@ -85,4 +85,4 @@ class GroupFormApp(ModelFormWidget):
 
     @title.setter
     def title(self, value):
-        super().title.fset(self, value)
+        ModelFormWidget.title.fset(self, value)
