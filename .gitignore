@@ -2,3 +2,7 @@
 core_people\.egg-info/
 
 *.pyc
+
+build/
+
+dist/
