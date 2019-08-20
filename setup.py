@@ -17,4 +17,5 @@ setup(
     long_description_content_type='text/markdown',
     packages=find_packages(),
     license='CC BY-NC 2.0',
+    install_requires=['core-common']
 )
