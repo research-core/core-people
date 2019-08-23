@@ -26,5 +26,6 @@ setup(
     long_description_content_type='text/markdown',
     packages=find_packages(),
     license=license,
-    install_requires=['core-common']
+    install_requires=['core-common'],
+    package_data={ 'people': ['fixtures/initial_data.yaml'] },
 )
