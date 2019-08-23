@@ -34,7 +34,10 @@ class AuthGroupsInline(ModelAdminWidget):
     def get_queryset(self, request, queryset):
         person = Person.objects.get(pk=self.parent_pk)
         user = person.auth_user
-        return user.groups.all()
+        if user is None:
+            return Group.objects.filter(pk=0)
+        else:
+            return user.groups.all()
 
     def has_add_permissions(self):
         # should always be False, use the Django Admin to manage these groups

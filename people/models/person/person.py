@@ -34,10 +34,10 @@ class Person(models.Model):
     last_name   = models.CharField('Last name', max_length=40, help_text='This field will appear in the website.')
     full_name   = models.CharField('Name', max_length=150)
 
-    email = models.EmailField('Research email', help_text='This field will appear in the website.')
+    email = models.EmailField('Research email', help_text='This field will appear in the website.', unique=True)
     web   = models.URLField('Website', blank=True, null=True,
                           help_text='This field will appear in the website.')
-    personal_email  = models.EmailField('Personal email', blank=True, null=True)
+    personal_email  = models.EmailField('Personal email', blank=True, null=True, unique=True)
     phone_extension = models.IntegerField('Phone extension', blank=True, null=True)
     phone_number    = models.CharField('Contact', max_length=20, blank=True, null=True,
                                     help_text='This field will appear in the website if the next field is checked.')
@@ -58,7 +58,7 @@ class Person(models.Model):
     auth_user   = models.OneToOneField(
         'auth.User',
         blank=True, null=True, verbose_name='User', related_name='person',
-        on_delete=models.SET_NULL
+        on_delete=models.SET_NULL, unique=True
     )
 
     objects = PersonQuerySet.as_manager()
@@ -148,36 +148,8 @@ class Person(models.Model):
 
     def get_privateinfo(self):
         from humanresources.models import PrivateInfo
-
-        try:
-            pinfo = self.privateinfo
-        except PrivateInfo.DoesNotExist:
-            pinfo = PrivateInfo(person=self)
-            pinfo.save()
-
-        return pinfo
-
-
-    def personprivateinfo(self):
-        """
-        Return a link "Go" to the "Private info" page where a user with permission
-        can read and edit the private information of the selected person.
-        If this person still dont have private information, the function
-        returns a "Not created yet" label.
-
-        @type  self:    Person
-        @rtype:         link
-        @return:        link to the "Private info" page of that person
-        """
-        from humanresources.models import PrivateInfo
-        try:
-            private = PrivateInfo.objects.get(person=self)
-            return format_html("""<a class='btn btn-warning' href='/humanresources/privateinfo/{0}/' ><i class="icon-lock icon-black"></i> Show private info</a>""".format(str(private.privateinfo_id)))
-        except ObjectDoesNotExist:
-            return format_html("""<a class='btn btn-warning' href='/humanresources/privateinfo/add/?person={0}' ><i class="icon-lock icon-black"></i> Private info</a>""".format(str(self.pk)))
-
-    personprivateinfo.short_description = 'Private info'
-    personprivateinfo.allow_tags = True
+        obj, created = PrivateInfo.objects.get_or_create(person=self)
+        return obj
 
     def person_contracts(self):
         """

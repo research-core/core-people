@@ -102,7 +102,13 @@ class UserProfileFormWidget(ModelFormWidget):
 
     def __init__(self, *args, **kwargs):
         user = PyFormsMiddleware.user()
-        person = Person.objects.get(auth_user=user)
+        try:
+            person = Person.objects.get(auth_user=user)
+        except Person.DoesNotExist:
+            person = Person.objects.get(email=user.email)
+            person.auth_user=user
+            person.save()
+
         super().__init__(pk=person.pk, *args, **kwargs)
 
         membership = GroupMembership.objects.filter(person=person).first()
@@ -127,12 +133,11 @@ class UserProfileFormWidget(ModelFormWidget):
         )
 
         if hr_module_installed:
-            privateinfo, _ = PrivateInfo.objects.get_or_create(person=person)
             self._privateinfo = ControlEmptyWidget(
                 parent=self,
                 name='_privateinfo',
                 default=ProfilePrivateInfoFormWidget(
-                    pk=privateinfo.pk,
+                    pk=person.get_privateinfo().pk,
                     has_cancel_btn=False,
                 ),
             )
