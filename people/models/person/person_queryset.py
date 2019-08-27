@@ -24,7 +24,7 @@ class PersonQuerySet(models.QuerySet):
         today = timezone.now().date()
 
         qs = self.extra(where=["""
-            NOT EXISTS (SELECT 1 FROM humanresources_contract b WHERE b.id = people_person.id and b.contract_start<='{0}' and b.contract_end>='{0}')
+            NOT EXISTS (SELECT 1 FROM humanresources_contract b WHERE b.id = people_person.id and b.start<='{0}' and b.end>='{0}')
         """.format(today.strftime('%Y-%m-%d'))
         ])
         return qs
@@ -37,10 +37,11 @@ class PersonQuerySet(models.QuerySet):
 
         qs = self.extra(where=["""
             NOT EXISTS (SELECT 1 FROM humanresources_contractproposal c WHERE c.id = people_person.id and
-            c.contractproposal_start<='{0}' and
+            c.start<='{0}' and
             DATE_ADD(DATE_ADD(c.start, INTERVAL c.days_duration DAY), INTERVAL c.months_duration MONTH)>='{0}')
         """.format(today.strftime('%Y-%m-%d'))
         ])
+        print(qs.query)
         return qs
 
     def nostartdate(self):
