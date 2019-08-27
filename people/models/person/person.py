@@ -58,7 +58,7 @@ class Person(models.Model):
     auth_user   = models.OneToOneField(
         'auth.User',
         blank=True, null=True, verbose_name='User', related_name='person',
-        on_delete=models.SET_NULL, unique=Truef
+        on_delete=models.SET_NULL, unique=True
     )
 
     objects = PersonQuerySet.as_manager()
