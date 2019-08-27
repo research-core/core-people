@@ -58,7 +58,7 @@ class Person(models.Model):
     auth_user   = models.OneToOneField(
         'auth.User',
         blank=True, null=True, verbose_name='User', related_name='person',
-        on_delete=models.SET_NULL, unique=True
+        on_delete=models.SET_NULL, unique=Truef
     )
 
     objects = PersonQuerySet.as_manager()
@@ -108,7 +108,12 @@ class Person(models.Model):
 
             # Set the email as verified automatically
             if EmailAddress.objects.filter(email=self.auth_user.email, user=self.auth_user).exists():
-                e = EmailAddress(user=self.auth_user, email=self.auth_user.email, verified=True, primary=True)
+                e = EmailAddress.objects.get_or_create(
+                    user=self.auth_user,
+                    email=self.auth_user.email,
+                    verified=True,
+                    primary=True
+                )
                 e.save()
 
         # TODO the above code block needs testing and updating
