@@ -108,12 +108,12 @@ class Person(models.Model):
 
             # Set the email as verified automatically
             if EmailAddress.objects.filter(email=self.auth_user.email, user=self.auth_user).exists():
-                e = EmailAddress.objects.get_or_create(
+                e = EmailAddress.objects.get(
                     user=self.auth_user,
                     email=self.auth_user.email,
-                    verified=True,
-                    primary=True
                 )
+                e.verified = True
+                e.primary = True
                 e.save()
 
         # TODO the above code block needs testing and updating
