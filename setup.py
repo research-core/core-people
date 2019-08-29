@@ -27,5 +27,11 @@ setup(
     packages=find_packages(),
     license=license,
     install_requires=['core-common'],
-    package_data={ 'people': ['fixtures/initial_data.yaml'] },
+    package_data={
+        'people': [
+            'fixtures/initial_data.yaml',
+            'static/img/*.png',
+            'static/*.png',
+        ]
+    },
 )
